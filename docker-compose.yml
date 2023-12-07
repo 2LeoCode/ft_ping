@@ -1,0 +1,7 @@
+services:
+  ft_ping:
+    build: .
+    working_dir: /root/ft_ping
+    volumes:
+      - "./:/root/ft_ping"
+    command: bash -c "sleep infinity"
