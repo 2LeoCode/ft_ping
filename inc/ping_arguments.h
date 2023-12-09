@@ -3,7 +3,6 @@
 
 # include <stddef.h>
 
-
 enum ping_arguments {
   PING_HELP = 1,
   PING_VERBOSE = 1 << 1,

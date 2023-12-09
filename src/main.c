@@ -149,14 +149,12 @@ int ping(char * const * targets, size_t ntargets, int flags) {
   uint8_t             ip_addr[NI_MAXHOST + 1];
   struct sockaddr_in  addr;
 
+  if (flags & PING_HELP)
+    return ping_help();
   if (!ntargets)
     return ping_no_host();
   if (!(data = ping_init(ntargets, flags)))
     return perror("ping_init"), 1;
-  if (flags & PING_HELP)
-    return ping_help();
-  if (flags & PING_VERBOSE)
-    printf("Verbose mode enabled\n");
   signal(SIGINT, int_handler);
   for (size_t i = 0; !ping_stop && i < ntargets; ++i) {
     if (dns_lookup((char *)targets[i], &addr, (char *)ip_addr) == -1) {
@@ -192,6 +190,7 @@ int ping(char * const * targets, size_t ntargets, int flags) {
           data->counters[i].max = interval;
       }
       if (!(response.ip_icmp.icmp_type == 69 && response.ip_icmp.icmp_code == 0)) {
+        if (flags & PING_VERBOSE)
         printf("Error: Packet received with ICMP type %d code %d\n", response.ip_icmp.icmp_type, response.ip_icmp.icmp_code);
       } else {
         printf(
