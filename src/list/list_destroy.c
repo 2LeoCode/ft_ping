@@ -1,8 +1,8 @@
 #include <list.h>
 #include <stdlib.h>
 
-void list_destroy(list * lst) {
-  list_node * node = lst->head;
+void list_destroy(list * self) {
+  list_node * node = self->head;
   list_node * next;
 
   if (node)
@@ -11,7 +11,7 @@ void list_destroy(list * lst) {
       free(node->data);
       free(node);
       node = next;
-    } while (node != lst->head);
-  lst->head = NULL;
-  lst->size = 0;
+    } while (node != self->head);
+  self->head = NULL;
+  self->size = 0;
 }

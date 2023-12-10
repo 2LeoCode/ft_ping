@@ -9,15 +9,18 @@ BUILD_DIR =	.build
 INC_DIRS =	inc $(wildcard ${LIB_DIR}/*/inc)
 
 CC =				gcc
-CVERSION = 	17
-CFLAGS =		-Wall -Wextra -Werror $(addprefix -I, ${INC_DIRS}) --std=gnu${CVERSION}
+CSTANDARD = gnu17
+CFLAGS =		-Wall -Wextra -Werror -MMD $(addprefix -I, ${INC_DIRS}) --std=${CSTANDARD}
 LDFLAGS = 	-lm
 
 SRC =				$(wildcard ${SRC_DIR}/*.${SRC_TYPE} ${SRC_DIR}/*/*.${SRC_TYPE})
-OBJ =				$(patsubst ${SRC_DIR}/%.c, ${BUILD_DIR}/%.o, ${SRC})
+OBJ =				$(patsubst ${SRC_DIR}/%.c, ${BUILD_DIR}/%.${OBJ_TYPE}, ${SRC})
+DEP =				$(OBJ:.${OBJ_TYPE}=.d)
 LIB = 			$(patsubst ${LIB_DIR}/%, ${LIB_DIR}/lib%.a, $(wildcard ${LIB_DIR}/*/))
 
 all: ${NAME}
+
+-include ${DEP}
 
 ${NAME}: ${BUILD_DIR} ${OBJ} ${LIB}
 	${CC} ${CFLAGS} ${OBJ} ${LIB} -o $@ ${LDFLAGS}
