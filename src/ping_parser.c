@@ -1,10 +1,13 @@
-#include <ping_arguments.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-int ping_parse_flags(char ** args) {
+#include <ping_parser.h>
+
+int
+ping_parse_flags(const char * const * const args) {
   int flags = 0;
+
   for (size_t i = 0; args[i]; ++i) {
     const char * arg = args[i];
     if (*arg && *arg == '-') {
@@ -32,8 +35,9 @@ int ping_parse_flags(char ** args) {
   return flags;
 }
 
-size_t ping_parse_targets(char ** args) {
-  size_t i = 0;
+size_t
+ping_parse_targets(const char ** const args) {
+  size_t i;
 
   for (i = 0; args[i]; ++i) {
     if (*args[i] == '-') {

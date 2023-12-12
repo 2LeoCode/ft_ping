@@ -1,15 +1,19 @@
-#include <list.h>
 #include <stdlib.h>
 #include <string.h>
 
-int list_push_back(list * self, void * data, size_t size) {
-  list_node * node = malloc(sizeof(list_node));
+#include <list.h>
 
-  if (!node)
-    return -1;
+int
+list_push_back(
+    list * const self,
+    const void * const data,
+    const size_t size
+  ) {
+  list_node * node = malloc(sizeof(list_node));
+  if (!node) return -1;
+
   ++self->size;
-  node->data = malloc(size);
-  if (!node->data) {
+  if (!(node->data = malloc(size))) {
     free(node);
     return -1;
   }

@@ -3,8 +3,13 @@
 
 # include <stddef.h>
 
-typedef struct list_node list_node;
-typedef struct list list;
+
+typedef struct list_node
+list_node;
+
+typedef struct list
+list;
+
 
 struct list_node {
   void *      data;
@@ -17,8 +22,18 @@ struct list {
   list_node * head;
 };
 
-list  list_new();
-int   list_push_back(list * self, void * data, size_t size);
-void  list_destroy(list * self);
+
+list
+list_new(void);
+
+int
+list_push_back(
+    list * const self,
+    const void * const data,
+    const size_t size
+);
+
+void
+list_destroy(list * const self);
 
 #endif

@@ -14,7 +14,7 @@ CFLAGS =		-Wall -Wextra -Werror -MMD $(addprefix -I, ${INC_DIRS}) --std=${CSTAND
 LDFLAGS = 	-lm
 
 SRC =				$(wildcard ${SRC_DIR}/*.${SRC_TYPE} ${SRC_DIR}/*/*.${SRC_TYPE})
-OBJ =				$(patsubst ${SRC_DIR}/%.c, ${BUILD_DIR}/%.${OBJ_TYPE}, ${SRC})
+OBJ =				$(patsubst ${SRC_DIR}/%.${SRC_TYPE}, ${BUILD_DIR}/%.${OBJ_TYPE}, ${SRC})
 DEP =				$(OBJ:.${OBJ_TYPE}=.d)
 LIB = 			$(patsubst ${LIB_DIR}/%, ${LIB_DIR}/lib%.a, $(wildcard ${LIB_DIR}/*/))
 
@@ -26,7 +26,7 @@ ${NAME}: ${BUILD_DIR} ${OBJ} ${LIB}
 	${CC} ${CFLAGS} ${OBJ} ${LIB} -o $@ ${LDFLAGS}
 
 ${BUILD_DIR}:
-	@mkdir -p $@/list
+	@mkdir -p $@/list $@/misc
 
 ${BUILD_DIR}/%.${OBJ_TYPE}: ${SRC_DIR}/%.${SRC_TYPE}
 	${CC} ${CFLAGS} -c $< -o $@
