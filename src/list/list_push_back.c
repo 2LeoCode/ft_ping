@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <list.h>
+#include <misc.h>
 
 int
 list_push_back(
@@ -17,7 +18,7 @@ list_push_back(
     free(node);
     return -1;
   }
-  memcpy(node->data, data, size);
+  ft_memcpy(node->data, data, size);
   if (!self->head) {
     self->head = node->next = node->prev = node;
     return 0;

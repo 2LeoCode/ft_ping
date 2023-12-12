@@ -1,6 +1,5 @@
-#include <math.h>
-
 #include <list.h>
+#include <misc.h>
 
 long double
 stddev(const list * const lst, const long double avg) {
@@ -9,7 +8,7 @@ stddev(const list * const lst, const long double avg) {
   long double sum = 0;
   list_node * node = lst->head;
 
-  do sum += pow(*(long double *)node->data - avg, 2);
+  do sum += ft_pow(*(long double *)node->data - avg, 2);
   while (node != lst->head);
-  return sqrt(sum / lst->size);
+  return ft_sqrt(sum / lst->size);
 }

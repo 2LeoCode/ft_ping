@@ -137,14 +137,14 @@ print_icmp_diag(const uint8_t type, const uint8_t code) {
         printf("Bad ICMP code for type %d", type);
         if (icmp_diag[i].text)
           printf(" (%s)", icmp_diag[i].text);
-        printf(": %d\n", code);
+        printf(": %d", code);
         return ;
       }
       if (icmp_diag[i].text)
         printf("%s: ", icmp_diag[i].text);
-      printf("%s\n", icmp_diag[i].info[code]);
+      printf("%s", icmp_diag[i].info[code]);
       return ;
     }
   }
-  printf("Bad ICMP type: %d\n", type);
+  printf("Bad ICMP type: %d", type);
 }

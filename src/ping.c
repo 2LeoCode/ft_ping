@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <icmp_diag.h>
 #include <misc.h>
@@ -19,22 +20,6 @@ static void
 int_handler(const int sig) {
   (void)sig;
   ping_stop = true;
-}
-
-static int
-dns_lookup(
-    const char * const hostname,
-    struct sockaddr_in * const addr_dst,
-    char * const ip_dst
-  ) {
-  struct hostent * host = gethostbyname(hostname);
-  if (!host) return -1;
-
-  strcpy(ip_dst, inet_ntoa(*(struct in_addr *)host->h_addr));
-  addr_dst->sin_family = host->h_addrtype;
-  addr_dst->sin_port = htons(0);
-  addr_dst->sin_addr.s_addr = *(long *)host->h_addr;
-  return 0;
 }
 
 static int
@@ -60,13 +45,32 @@ ping_checksum(const void * b, int len) {
   return ~sum;
 }
 
+static int
+dns_lookup(
+    const char * const domain_name,
+    struct sockaddr_in * const addr_dst
+  ) {
+  static const struct addrinfo hints = {
+    .ai_family = AF_INET,
+    .ai_socktype = SOCK_RAW,
+    .ai_protocol = IPPROTO_ICMP,
+  };
+  struct addrinfo * result;
+
+  if (getaddrinfo(domain_name, NULL, &hints, &result) != 0)
+    return -1;
+  *addr_dst = *(struct sockaddr_in *)result->ai_addr;
+  freeaddrinfo(result);
+  return 0;
+}
+
 static ping_data *
 ping_init(const size_t ntargets) {
   ping_data * data = malloc(sizeof(*data) + sizeof(*data->counters) * ntargets);
   if (!data) return NULL;
 
   signal(SIGINT, int_handler);
-  bzero(data, sizeof(*data) + sizeof(*data->counters) * ntargets);
+  ft_memset(data, 0, sizeof(*data) + sizeof(*data->counters) * ntargets);
   data->ident = getpid() & 0xffff;
   if ((data->sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
     return NULL;
@@ -98,10 +102,10 @@ ping_init(const size_t ntargets) {
 
 static void
 ping_fini(
-  ping_data * const data,
-  const char * const * const targets,
-  const size_t ntargets
-) {
+    ping_data * const data,
+    const char * const * const targets,
+    const size_t ntargets
+  ) {
   long double percent_lost, avg, std;
 
   for (size_t i = 0; i < ntargets; ++i) {
@@ -133,23 +137,38 @@ ping(
   ping_data *         data;
   struct timespec     ts_send, ts_recv;
   long double         interval;
-  uint8_t             ip_addr[NI_MAXHOST + 1];
+  struct sockaddr_in  dst_addr;
+  char                ip_addr[NI_MAXHOST + 1];
   char                res_buffer[IP_HDR_MAXLEN + sizeof(ping_pkt)];
-  struct sockaddr_in  addr;
   size_t              ip_hdr_size;
+  struct iphdr *      ip_hdr;
   ping_pkt *          response;
+  struct iovec        res_iov = {
+    .iov_base = res_buffer,
+    .iov_len = sizeof(res_buffer),
+  };
+  struct msghdr       res_msg = {
+    .msg_name = NULL,
+    .msg_namelen = 0,
+    .msg_iov = &res_iov,
+    .msg_iovlen = 1,
+    .msg_control = NULL,
+    .msg_controllen = 0,
+    .msg_flags = 0,
+  };
 
-  if (flags & PING_HELP)
-    return ping_help();
-  if (!ntargets)
-    return ping_no_host();
-  if (!(data = ping_init(ntargets)))
-    return perror("ping_init"), 1;
+  if (flags & PING_HELP) return ping_help();
+  if (!ntargets) return ping_no_host();
+  if (!(data = ping_init(ntargets))) {
+    fprintf(stderr, "ping_init: %s\n", strerror(errno));
+    return 1;
+  }
   for (size_t i = 0; !ping_stop && i < ntargets; ++i) {
-    if (dns_lookup((char *)targets[i], &addr, (char *)ip_addr) == -1) {
-      printf("DNS lookup failed for %s\n", targets[i]);
+    if (dns_lookup(targets[i], &dst_addr) == -1) {
+      fprintf(stderr, "DNS lookup failed for %s\n", targets[i]);
       continue ;
     }
+    ft_strcpy(ip_addr, inet_ntoa(dst_addr.sin_addr));
     printf("PING %s (%s): %zu data bytes", targets[i], ip_addr, sizeof(data->pkt.msg));
     if (flags & PING_VERBOSE)
       printf(", id 0x%04x = %u", data->ident, data->ident);
@@ -163,18 +182,13 @@ ping(
             data->sockfd,
             &data->pkt, sizeof(data->pkt),
             0,
-            (void *)&addr, sizeof(addr)
+            (void *)&dst_addr, sizeof(dst_addr)
           ) <= 0) {
-        perror("sendto");
+        fprintf(stderr, "sendto: %s", strerror(errno));
         break ;
       }
       ++data->counters[i].sent;
-      if (recvfrom(
-            data->sockfd,
-            &res_buffer, sizeof(res_buffer),
-            0, NULL, NULL
-          ) <= 0)
-        continue ;
+      if (recvmsg(data->sockfd, &res_msg, 0) <= 0) continue;
       clock_gettime(CLOCK_MONOTONIC, &ts_recv);
       interval = (long double)(ts_recv.tv_nsec - ts_send.tv_nsec) / 1000000.
         + (long double)(ts_recv.tv_sec - ts_send.tv_sec) * 1000.;
@@ -187,7 +201,8 @@ ping(
         if (interval > data->counters[i].max)
           data->counters[i].max = interval;
       }
-      ip_hdr_size = ((struct iphdr *)res_buffer)->ihl * 4;
+      ip_hdr = (struct iphdr *)res_buffer;
+      ip_hdr_size = ip_hdr->ihl * 4;
       response = (ping_pkt *)(res_buffer + ip_hdr_size);
       printf(
         "%zu bytes from %s: icmp_seq=%d ttl=%d time=%Lf ms",

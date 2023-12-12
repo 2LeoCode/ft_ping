@@ -3,10 +3,13 @@
 int
 ping_help(void) {
   printf(
-    "Usage: ping [options] [targets...]\n"
-    "Options:\n"
-    "  -?, --help, --usage: Display this help message\n"
-    "  -v, --verbose: Enable verbose mode\n"
+    "Usage: ft_ping [OPTION...] HOST ...\n"
+    "Send ICMP ECHO_REQUEST packets to network hosts.\n"
+    "\n"
+    " Options:\n"
+    "\n"
+    "  -?, --help                 give this help list\n"
+    "  -v, --verbose              verbose output\n"
   );
   return 0;
 }

@@ -3,7 +3,6 @@
 #include <ping_parser.h>
 #include <ping.h>
 
-
 int
 main(const int argc, const char ** const argv) {
   (void)argc;

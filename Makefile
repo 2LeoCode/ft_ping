@@ -11,7 +11,7 @@ INC_DIRS =	inc $(wildcard ${LIB_DIR}/*/inc)
 CC =				gcc
 CSTANDARD = gnu17
 CFLAGS =		-Wall -Wextra -Werror -MMD $(addprefix -I, ${INC_DIRS}) --std=${CSTANDARD}
-LDFLAGS = 	-lm
+LDFLAGS = 	
 
 SRC =				$(wildcard ${SRC_DIR}/*.${SRC_TYPE} ${SRC_DIR}/*/*.${SRC_TYPE})
 OBJ =				$(patsubst ${SRC_DIR}/%.${SRC_TYPE}, ${BUILD_DIR}/%.${OBJ_TYPE}, ${SRC})

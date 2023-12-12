@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <ping_parser.h>
+#include <misc.h>
 
 int
 ping_parse_flags(const char * const * const args) {
@@ -14,25 +15,39 @@ ping_parse_flags(const char * const * const args) {
       ++arg;
       if (*arg && *arg == '-') {
         ++arg;
-        if (!strcmp(arg, "help") || !strcmp(arg, "usage")) {
-          flags |= PING_HELP;
-        } else if (!strcmp(arg, "verbose")) {
+        if (!ft_strcmp(arg, "help"))
+          return PING_HELP;
+        else if (!ft_strcmp(arg, "verbose"))
           flags |= PING_VERBOSE;
-        } else {
-          fprintf(stderr, "Unknown flag: `%s'\n", arg);
-          return -1;
+        else {
+          fprintf(stderr, "ft_ping: unrecognized option '%s'\n", arg - 2);
+          goto invalid_option;
         }
-      } else if (!strcmp(arg, "?")) {
-        flags |= PING_HELP;
-      } else if (!strcmp(arg, "v")) {
-        flags |= PING_VERBOSE;
       } else {
-        fprintf(stderr, "Unknown flag: `%s'\n", arg);
-        return -1;
+        while (*arg) {
+          switch (*arg) {
+            case '?':
+              return PING_HELP;
+            case 'v':
+              flags |= PING_VERBOSE;
+              break ;
+            default:
+              fprintf(stderr, "ft_ping: invalid option -- '%c'\n", *arg);
+              goto invalid_option;
+          }
+          ++arg;
+        }
       }
     }
   }
   return flags;
+
+  invalid_option:
+  fprintf(
+    stderr,
+    "Try 'ft_ping --help' or 'ft_ping --usage' for more information.\n"
+  );
+  return -1;
 }
 
 size_t
